@@ -1,0 +1,31 @@
+-------------- Application --------------
+debug(message)
+-------------- AbstractLogger --------------
+logIfEnabled(componentName, LogType, msg, exception)
+if type is enabled logMessageSafely(componentName, LogType ...)
+logMessageTrackRecursion(...) prevent recursive messages toString()
+tryLogMessage(...)
+try/catch logMessage(...)
+-------------- Logger --------------
+ReliabilityStrategy strategy.log(current logger, getName(), ...) (used to allow reconfiguration in runtime)
+-------------- ReliabilityStrategy --------------
+LoggerConfig config.log(loggerName, ...) (active logger config)
+-------------- LoggerConfig --------------
+BUILD LogEvent via LogEventFactory; log(logEvent)
+if not filtered processLogEvent(event)
+callAppenders(event) - pass the event to each AppenderControl
+-------------- AppenderControl --------------
+if should not skip  callAppenderPreventRecursion(event)
+callAppender0(event)
+ensureAppenderStarted()
+tryCallAppender(event)
+try/catch appender.append(event)
+-------------- AbstractDatabaseAppender --------------
+try/catch getManager().write(event)
+-------------- AbstractDatabaseManager --------------
+add event buffer if bufferSize > 0 (persist by batches)
+connectAndStart() - get entityManager and open transaction
+writeInternal(event)
+-------------- JpaDatabaseManager --------------
+entityConstructor.newInstance(event)
+try/catch entityManager.persist(entity)

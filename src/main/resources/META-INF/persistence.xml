@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+                                 http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+             version="2.1">
+
+    <persistence-unit name="loggingPersistenceUnit">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>  <!-- Полный путь к классу Provider-->
+        <class>com.test.logger.Log</class>
+        <properties>
+            <property name="connection.autocommit" value="true"/>
+            <property name="hibernate.show_sql"
+                      value="false"/>
+            <property name="hibernate.format_sql"
+                      value="false"/><!-- Все sq-запросы которые сгенерил hibernate выводить в консоли-->
+            <property name="hibernate.hbm2ddl.auto"
+                      value="update"/>    <!-- Обновление схемы в БД каждый раз при внесении изменений структуры таблиц -->
+            <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="javax.persistence.jdbc.url"
+                      value="jdbc:h2:tcp://localhost/~/Logging"/>
+            <property name="hibernate.dialect"
+                      value="org.hibernate.dialect.H2Dialect"/> <!-- Полный путь к классу описывающего диалект общения с типом БД -->
+            <property name="javax.persistence.jdbc.user" value="sa"/>
+            <property name="javax.persistence.jdbc.password" value=""/>
+        </properties>
+    </persistence-unit>
+
+</persistence>
