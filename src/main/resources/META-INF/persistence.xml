@@ -8,6 +8,7 @@
     <persistence-unit name="loggingPersistenceUnit">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>  <!-- Полный путь к классу Provider-->
         <class>com.test.logger.Log</class>
+        <class>com.test.logger.TestLog</class>
         <properties>
             <property name="connection.autocommit" value="true"/>
             <property name="hibernate.show_sql"

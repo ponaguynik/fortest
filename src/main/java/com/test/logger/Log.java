@@ -3,6 +3,8 @@ package com.test.logger;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.db.jpa.converter.InstantAttributeConverter;
+import org.apache.logging.log4j.core.time.Instant;
 import org.apache.logging.log4j.core.util.ReflectionUtil;
 import org.apache.logging.log4j.message.StructuredDataMessage;
 import org.apache.logging.log4j.util.IndexedReadOnlyStringMap;
@@ -12,13 +14,11 @@ import org.hibernate.annotations.Immutable;
 
 import javax.persistence.*;
 import java.lang.reflect.Field;
-import java.time.Instant;
 
-@Entity
-@Table(name = "TEST_LOG")
 @Immutable
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class Log extends AbstractLog {
+@MappedSuperclass
+public abstract class Log extends AbstractLog {
     @Id
     @GeneratedValue
     private Long id;
@@ -26,6 +26,7 @@ public class Log extends AbstractLog {
     @GeneratorType(type = RidGenerator.class, when = GenerationTime.INSERT)
     private String rid;
     @Column(name = "LOG_DATE")
+    @Convert(converter = InstantAttributeConverter.class)
     private Instant logDate;
     @Column(name = "COMPONENT_NAME")
     private String componentName;
@@ -55,7 +56,7 @@ public class Log extends AbstractLog {
             StructuredDataMessage msg = (StructuredDataMessage) wrappedEvent.getMessage();
             buildByStructuredDataMessage(msg);
         }
-        this.logDate = Instant.ofEpochMilli(wrappedEvent.getInstant().getEpochMillisecond());
+        this.logDate = wrappedEvent.getInstant();
         this.message = wrappedEvent.getMessage().getFormat();
     }
 

@@ -9,7 +9,6 @@ import org.apache.logging.log4j.core.appender.db.jpa.JpaAppender;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 
@@ -18,39 +17,30 @@ public class MyJpaDatabaseManager extends AbstractDatabaseManager {
     private static final MyJpaDatabaseManagerFactory FACTORY = new MyJpaDatabaseManagerFactory();
 
     private final String entityClassName;
-    private final Constructor<? extends Log> entityConstructor;
-    private final String persistenceUnitName;
-
-    private EntityManagerFactory entityManagerFactory;
+    private final Constructor<? extends AbstractLog> entityConstructor;
+    private final EntityManagerFactory entityManagerFactory;
 
     private EntityManager entityManager;
     private EntityTransaction transaction;
 
     private MyJpaDatabaseManager(final String name, final int bufferSize,
-                               final Class<? extends Log> entityClass,
-                               final Constructor<? extends Log> entityConstructor,
-                               final String persistenceUnitName) {
+                               final Class<? extends AbstractLog> entityClass,
+                               final Constructor<? extends AbstractLog> entityConstructor,
+                               final EntityManagerFactory entityManagerFactory) {
         super(name, bufferSize);
         this.entityClassName = entityClass.getName();
         this.entityConstructor = entityConstructor;
-        this.persistenceUnitName = persistenceUnitName;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     @Override
     protected void startupInternal() {
-        this.entityManagerFactory = Persistence.createEntityManagerFactory(this.persistenceUnitName);
+
     }
 
     @Override
     protected boolean shutdownInternal() {
-        boolean closed = true;
-        if (this.entityManager != null || this.transaction != null) {
-            closed = this.commitAndClose();
-        }
-        if (this.entityManagerFactory != null && this.entityManagerFactory.isOpen()) {
-            this.entityManagerFactory.close();
-        }
-        return closed;
+        return this.entityManager == null && this.transaction == null || commitAndClose();
     }
 
     @Override
@@ -80,7 +70,7 @@ public class MyJpaDatabaseManager extends AbstractDatabaseManager {
                     "Cannot write logging event; JPA manager not connected to the database.");
         }
 
-        Log entity;
+        AbstractLog entity;
         try {
             entity = this.entityConstructor.newInstance(event);
         } catch (final Exception e) {
@@ -136,18 +126,17 @@ public class MyJpaDatabaseManager extends AbstractDatabaseManager {
      * @param entityClass The fully-qualified class name of the {@link Log} concrete
      *                    implementation.
      * @param entityConstructor The one-arg {@link LogEvent} constructor for the concrete entity class.
-     * @param persistenceUnitName The name of the JPA persistence unit that should be used for persisting log events.
      * @return a new or existing JPA manager as applicable.
      */
     public static MyJpaDatabaseManager getJPADatabaseManager(final String name, final int bufferSize,
-                                                           final Class<? extends Log>
+                                                           final Class<? extends AbstractLog>
                                                                    entityClass,
-                                                           final Constructor<? extends Log>
+                                                           final Constructor<? extends AbstractLog>
                                                                    entityConstructor,
-                                                           final String persistenceUnitName) {
+                                                           final EntityManagerFactory entityManagerFactory) {
 
         return AbstractDatabaseManager.getManager(
-                name, new FactoryData(bufferSize, entityClass, entityConstructor, persistenceUnitName), FACTORY
+                name, new FactoryData(bufferSize, entityClass, entityConstructor, entityManagerFactory), FACTORY
         );
     }
 
@@ -155,18 +144,17 @@ public class MyJpaDatabaseManager extends AbstractDatabaseManager {
      * Encapsulates data that {@link MyJpaDatabaseManagerFactory} uses to create managers.
      */
     private static final class FactoryData extends AbstractDatabaseManager.AbstractFactoryData {
-        private final Class<? extends Log> entityClass;
-        private final Constructor<? extends Log> entityConstructor;
-        private final String persistenceUnitName;
+        private final Class<? extends AbstractLog> entityClass;
+        private final Constructor<? extends AbstractLog> entityConstructor;
+        private final EntityManagerFactory entityManagerFactory;
 
-        protected FactoryData(final int bufferSize, final Class<? extends Log> entityClass,
-                              final Constructor<? extends Log> entityConstructor,
-                              final String persistenceUnitName) {
+        protected FactoryData(final int bufferSize, final Class<? extends AbstractLog> entityClass,
+                              final Constructor<? extends AbstractLog> entityConstructor,
+                              EntityManagerFactory entityManagerFactory) {
             super(bufferSize, null);
-
             this.entityClass = entityClass;
             this.entityConstructor = entityConstructor;
-            this.persistenceUnitName = persistenceUnitName;
+            this.entityManagerFactory = entityManagerFactory;
         }
     }
 
@@ -178,7 +166,7 @@ public class MyJpaDatabaseManager extends AbstractDatabaseManager {
         @Override
         public MyJpaDatabaseManager createManager(final String name, final FactoryData data) {
             return new MyJpaDatabaseManager(
-                    name, data.getBufferSize(), data.entityClass, data.entityConstructor, data.persistenceUnitName
+                    name, data.getBufferSize(), data.entityClass, data.entityConstructor, data.entityManagerFactory
             );
         }
     }
